@@ -60,11 +60,26 @@ IF DEFINED CLEAN_LOCAL_DEPLOYMENT_TEMP (
 IF NOT DEFINED MSBUILD_PATH (
   SET MSBUILD_PATH=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe
 )
+
+IF NOT DEFINED SCM_DNVM_PS_PATH (
+  SET SCM_DNVM_PS_PATH="C:\Program Files\Microsoft DNX\Dnvm\dnvm.ps1"
+)
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Deployment
 :: ----------
 
 echo Handling ASP.NET 5 Web Application deployment.
+echo ----------------------------------------------
+echo.
+echo Current directory: %cd%
+
+:: Deleting bin directory required on developer machine
+IF EXIST .\source\debug-http-post\bin\nul (
+	ECHO Deleting .\source\debug-http-post\bin...
+	rd /s /q .\source\debug-http-post\bin
+	IF !ERRORLEVEL! NEQ 0 goto error
+)
 
 :: Remove wwwroot if deploying to default location
 IF "%DEPLOYMENT_TARGET%" == "%WEBROOT_PATH%" (
@@ -93,7 +108,7 @@ call %DNX_RUNTIME%\bin\dnu restore "%DEPLOYMENT_SOURCE%" %SCM_DNU_RESTORE_OPTION
 IF !ERRORLEVEL! NEQ 0 goto error
 
 :: 4. Run DNU Publish
-call %DNX_RUNTIME%\bin\dnu publish "D:\home\site\repository\src\live.asp.net\project.json" --no-source --configuration Release --runtime %DNX_RUNTIME% --out "%DEPLOYMENT_TEMP%" %SCM_DNU_PUBLISH_OPTIONS%
+call %DNX_RUNTIME%\bin\dnu publish ".\src\live.asp.net\project.json" --no-source --configuration Release --runtime %DNX_RUNTIME% --out "%DEPLOYMENT_TEMP%" %SCM_DNU_PUBLISH_OPTIONS%
 IF !ERRORLEVEL! NEQ 0 goto error
 
 :: 5. KuduSync
